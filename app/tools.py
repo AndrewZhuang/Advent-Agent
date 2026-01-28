@@ -5,6 +5,8 @@ import textwrap
 from pathlib import Path
 from typing import Optional
 import requests
+from app.agents.agent import Agent
+from app.prompts import REVIEWER_SYSTEM_PROMPT
 from app.utils import strip_tags
 
 def get_puzzle_description(day: int, year: int = 2024, part: str='a') -> str:
@@ -13,7 +15,7 @@ def get_puzzle_description(day: int, year: int = 2024, part: str='a') -> str:
     """
     puzzle = get_puzzle(day=day, year=year)
     page = examples.Page.from_raw(html=puzzle._get_prose(force_precheck=True))
-    print(strip_tags(page.a_raw) if part == 'a' else strip_tags(page.b_raw))
+    # print(strip_tags(page.a_raw) if part == 'a' else strip_tags(page.b_raw))
     return strip_tags(page.a_raw) if part == 'a' else strip_tags(page.b_raw)
 
 
@@ -122,10 +124,33 @@ run_python.schema = {
     "required": ["code"],
 }
 
+def run_reviewer(puzzle_description: str, solution_code: str) -> str:
+    """
+    Review the provided solution code against the puzzle description.
+    """
+    reviewer = Agent(system_prompt=REVIEWER_SYSTEM_PROMPT, tool_registry=REVIEWER_TOOL_REGISTRY)
+    print("Running reviewer agent...")
+    output = reviewer.run(goal=f"Review the following solution code:\n\n{solution_code}\n\nfor the puzzle described as:\n\n{puzzle_description}")
+    print("Reviewer output:", output)
+    return output
 
-TOOL_REGISTRY = {
+run_reviewer.schema = {
+    "type": "object",
+    "properties": {
+        "puzzle_description": {"type": "string"},
+        "solution_code": {"type": "string"},
+    },
+    "required": ["puzzle_description", "solution_code"],
+}
+
+SOLVER_TOOL_REGISTRY = {
     "get_puzzle_description": get_puzzle_description,
     "get_puzzle_input": get_puzzle_input,
     "submit_answer": submit_answer,
+    "run_python": run_python,
+    "run_reviewer": run_reviewer,
+}
+
+REVIEWER_TOOL_REGISTRY = {
     "run_python": run_python
 }
