@@ -32,10 +32,14 @@ get_puzzle_description.schema = {
 
 def get_puzzle_input(day: int, year: int = 2024) -> str:
     """
-    Fetch your personal Advent of Code input for a given day.
+    Fetch your personal Advent of Code input for a given day and write it to a temporary file. Returns path to input file.
     """
-    return get_data(day=day, year=year).strip()
+    inputFileName = f"aoc_input_{year}_day_{day}.txt"
 
+    input = get_data(day=day, year=year)
+    with(open(inputFileName, "w")) as f:
+        f.write(input)
+    return inputFileName
 
 get_puzzle_input.schema = {
     "type": "object",
